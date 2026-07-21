@@ -13,7 +13,8 @@ received account turn out to be wrong, and one of them propagates.
 
 | Path | Contents |
 |---|---|
-| `paper/main.tex` | The manuscript |
+| **[`paper/main.pdf`](paper/main.pdf)** | **The manuscript, compiled — start here** (16 pp.) |
+| `paper/main.tex` | Manuscript source |
 | `paper/figures/` | Generated figures (PDF and PNG) |
 | `code/fuxi/` | The formalization, seven modules, standard library only |
 | `code/verify_all.py` | The verification driver: 40 checks, one command |
@@ -36,7 +37,13 @@ python verify_all.py                                  # console report
 python verify_all.py --markdown ../results/verification_report.md
 python -m pytest tests -q                             # test suite
 python figures/make_figures.py                        # regenerate figures
+
+cd ../paper && latexmk -pdf main.tex                  # rebuild the PDF
 ```
+
+`paper/main.pdf` is committed for convenience. It is also rebuilt by CI on every
+push, so if it ever drifts from `main.tex` the workflow artifact is the version
+that matches the source.
 
 Rational quantities are computed with `fractions.Fraction` and compared for
 exact equality, not within a tolerance. Wherever a property is finite enough to
