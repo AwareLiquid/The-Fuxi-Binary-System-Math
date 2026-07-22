@@ -1,0 +1,36 @@
+cff-version: 1.2.0
+message: "If you use this work, please cite it as below."
+title: "The Fuxi Binary System: formalization and verification suite"
+abstract: >-
+  A computational formalization of the Fuxi Earlier Heaven arrangement of the
+  sixty-four hexagrams, together with a suite that machine-checks every
+  quantitative claim the formalization makes. Of forty-seven checked claims,
+  twenty-five are confirmed, five refined, nine new, and eight corrected.
+authors:
+  - family-names: An
+    given-names: Muning
+    email: everest9812@gmail.com
+repository-code: "https://github.com/AwareLiquid/The-Fuxi-Binary-System-Math"
+license: MIT
+version: "1.1.0"
+date-released: "2026-07-22"
+keywords:
+  - Yijing
+  - I Ching
+  - hexagram
+  - binary encoding
+  - elementary abelian group
+  - hypercube
+  - Markov chain
+  - reproducible verification
+preferred-citation:
+  type: article
+  title: >-
+    A machine-checked formalization of the Fuxi hexagram system: group
+    structure, divination-induced Markov dynamics, and corrections to the
+    received analysis
+  authors:
+    - family-names: An
+      given-names: Muning
+      email: everest9812@gmail.com
+  year: 2026
