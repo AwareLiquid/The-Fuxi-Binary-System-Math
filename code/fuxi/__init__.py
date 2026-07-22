@@ -9,11 +9,21 @@ markov        the two competing transition kernels and their spectra
 topology      hypercube metrics of the state-transition graph
 information   entropy and mutual information
 genetic       the binary structure of the 64-codon genetic code
+orderings     comparative structure of the Fuxi and King Wen arrangements
 """
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
-from . import automaton, encoding, genetic, information, markov, topology, yarrow
+from . import (
+    automaton,
+    encoding,
+    genetic,
+    information,
+    markov,
+    orderings,
+    topology,
+    yarrow,
+)
 
 __all__ = [
     "encoding",
@@ -23,4 +33,5 @@ __all__ = [
     "topology",
     "information",
     "genetic",
+    "orderings",
 ]

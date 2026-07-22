@@ -72,6 +72,45 @@ Together they generate the hyperoctahedral group of order $2^6 \cdot 6! = 46{,}0
 in which $\mathbb{Z}_2^6$ is normal. Earlier algebraic treatments of the system
 work with the permutation action; this work is about the flip action.
 
+## Two readings of the arrangement, kept apart
+
+This is the subtlest distinction in the project, and getting it wrong is what
+produced one of the paper's corrections.
+
+The **set** of 64 hexagrams does not depend on any convention. The **sequence**
+does.
+
+| Reading | Bottom line is | Classical trigram order reads as | Used for |
+|---|---|---|---|
+| **bottom-as-LSB** | least significant | 7, 3, 5, 1, 6, 2, 4, 0 — no pattern | the algebra in this package |
+| **bottom-as-MSB** | most significant | **7, 6, 5, 4, 3, 2, 1, 0** — descending | the classical Earlier Heaven sequence |
+
+The classical order 乾兌離震巽坎艮坤 descends 7 → 0 only under bottom-as-MSB.
+So "the Earlier Heaven arrangement is binary counting" is true, but only under
+the reading this package does *not* use for the algebra.
+
+The two readings are conjugate by **bit reversal**, which `orderings.reverse`
+computes on integers. Bit reversal is a permutation of bit positions, hence an
+isometry of the hypercube, hence it preserves every Hamming distance. So:
+
+- no distance-based property can depend on the choice;
+- the two sequences nevertheless differ at **56 of 64 positions**.
+
+Never write "the Fuxi ordering is 0, 1, …, 63" without naming the reading.
+The function is called `counting_ordering()`, not `fuxi_ordering()`, for exactly
+this reason.
+
+## Two operations on hexagrams, kept apart
+
+| Term | Chinese | Operation | Fixed points |
+|---|---|---|---|
+| **reversal** | 綜卦 | turn the hexagram upside down (reverse the line order) | the 8 palindromes |
+| **complement** | 錯卦 | flip every line | none |
+
+The **canonical matching** used for the King Wen couplet claim is: reversal,
+except complement for the 8 hexagrams that reversal fixes. That is a perfect
+matching — 28 reversal pairs plus 4 complement pairs.
+
 ## Two kernels, kept apart
 
 - $P^{A}$, the **independent-mask kernel**: every line flips with probability

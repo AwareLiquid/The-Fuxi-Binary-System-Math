@@ -6,7 +6,7 @@ Every numeric quantity drawn here is computed at run time by calling the
 
 Usage
 -----
-    py code/figures/make_figures.py                     # all six figures
+    py code/figures/make_figures.py                     # all seven figures
     py code/figures/make_figures.py --only fig4         # just one
     py code/figures/make_figures.py --outdir /some/dir
 
@@ -38,7 +38,9 @@ _CODE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _CODE_DIR not in sys.path:
     sys.path.insert(0, _CODE_DIR)
 
-from fuxi import encoding, information, markov, topology, yarrow  # noqa: E402
+from fuxi import (  # noqa: E402
+    encoding, information, king_wen, markov, orderings, topology, yarrow,
+)
 
 DEFAULT_OUTDIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "paper", "figures")
 
@@ -68,6 +70,14 @@ S3 = "#4a3aa7"   # series 3 — violet  (Monte-Carlo check)
 HATCH_1 = ""       # series 1: solid fill
 HATCH_2 = "////"   # series 2
 HATCH_3 = "...."   # series 3
+
+# A single-hue sequential ramp, used only where the classes are *ordered* (the
+# Hamming distance d = 1..6 of figure 7). Lightness falls monotonically, so the
+# six classes stay separable in greyscale print; a surface-coloured edge keeps
+# neighbouring segments apart as well. Never used for nominal categories.
+D_RAMP = ("#dbe7f6", "#adc9e9", "#7ba7da", "#4c85c8", "#2a5f9e", "#193f68")
+
+NEUTRAL = "#bdbcb3"   # a null / reference series, deliberately not a named hue
 
 FS_TITLE  = 10.5
 FS_SUB    = 8.5
@@ -846,6 +856,274 @@ def fig6_information(outdir: str) -> list:
 
 
 # ==========================================================================
+# Figure 7 — the orderings compared as codes and as symmetry structures
+# ==========================================================================
+
+ORDER_TRIALS = 4_000
+ORDER_SEED = 20260722
+
+
+def fig7_orderings(outdir: str) -> list:
+    """Symmetry versus proximity: King Wen is exact on one, ordinary on the other."""
+    n_steps = encoding.N_HEXAGRAMS - 1          # 63 consecutive pairs
+    n_couplets = encoding.N_HEXAGRAMS // 2      # 32
+
+    # ---- panel (a): the four orderings as codes --------------------------
+    rows = [
+        ("Gray code\n(reflected binary)", orderings.gray_ordering()),
+        ("Earlier Heaven\nas binary counting", orderings.counting_ordering()),
+        ("Earlier Heaven\ntraditional reading", orderings.fuxi_traditional_ordering()),
+        ("King Wen\nsequence", king_wen.king_wen_ordering()),
+    ]
+    profiles = [orderings.distance_profile(order) for _, order in rows]
+
+    for p in profiles:
+        assert p["steps"] == n_steps
+        assert sum(p["counts"]) == n_steps
+        assert p["counts"][0] == 0, "a step of distance zero would repeat a hexagram"
+
+    # The Gray code attains the optimum: every step flips exactly one line.
+    assert profiles[0]["counts"][1] == n_steps and profiles[0]["mean"] == 1.0
+    # The two readings of the Earlier Heaven arrangement are different sequences
+    # over the same set, related by bit reversal, which is an isometry of Q6 —
+    # so their distance profiles are identical, term by term.
+    rel = orderings.bit_reversal_relation()
+    assert rel["reverse_is_hypercube_isometry"]
+    assert rel["same_underlying_set"] and not rel["same_sequence"]
+    assert rel["positions_that_differ"] > 0
+    assert profiles[1]["counts"] == profiles[2]["counts"]
+    assert profiles[1]["mean"] == profiles[2]["mean"]
+    assert profiles[1]["total_line_changes"] == orderings.fuxi_total_changes_closed_form()
+
+    null = orderings.random_profile_distribution(ORDER_TRIALS, seed=ORDER_SEED)
+    exact_null_mean = orderings.expected_random_consecutive_distance()
+    assert abs(null["mean"] - exact_null_mean) < 0.05, "simulated null missed the exact mean"
+    z_kw = (profiles[3]["mean"] - null["mean"]) / null["stdev"]
+    # The headline of panel (a): King Wen is *above* the random mean, not below.
+    assert z_kw > 0, "King Wen should sit above the random mean, not below it"
+
+    # ---- panel (b): the couplet claim ------------------------------------
+    pair = orderings.pairing_structure(rows[3][1])
+    matching = orderings.canonical_matching()
+    assert pair["couplets"] == n_couplets
+    assert pair["claim_holds"] and pair["unexplained_pairs"] == 0
+    assert pair["reversal_pairs"] + pair["complement_pairs"] == n_couplets
+    assert matching["is_perfect_matching"]
+    assert (matching["reversal_pairs"], matching["complement_pairs"]) == (
+        pair["reversal_pairs"], pair["complement_pairs"]
+    )
+    # The complement couplets are exactly the self-reversing ones.
+    for _, a, b in pair["complement_detail"]:
+        assert orderings.is_palindromic(a) and orderings.is_palindromic(b)
+    comp_labels = ", ".join(
+        f"{2 * c - 1}–{2 * c}" for c, _, _ in pair["complement_detail"]
+    )
+
+    expected = orderings.expected_explained_couplets_random()
+    sim = orderings.pairing_simulation(ORDER_TRIALS, seed=ORDER_SEED)
+    nullp = orderings.pairing_null_probability()
+    assert sim["max_couplets_explained"] < n_couplets
+    assert expected["expected_couplets"] < sim["max_couplets_explained"]
+    assert 0.0 < nullp["probability"] < 1e-40
+    p_exp = int(np.floor(np.log10(nullp["probability"])))
+    p_mant = nullp["probability"] / 10.0 ** p_exp
+
+    # ======================================================================
+    fig = plt.figure(figsize=(7.7, 8.4))
+    gs = fig.add_gridspec(
+        2, 2, height_ratios=[1.0, 0.86], width_ratios=[2.30, 1.0],
+        left=0.152, right=0.984, top=0.840, bottom=0.148,
+        hspace=0.34, wspace=0.13,
+    )
+    ax_dist = fig.add_subplot(gs[0, 0])
+    ax_mean = fig.add_subplot(gs[0, 1], sharey=ax_dist)
+    ax_pair = fig.add_subplot(gs[1, :])
+
+    y_pos = [3.0, 2.0, 1.0, 0.0]          # top row first
+    bar_h = 0.62
+    x_pad = n_steps * 1.34                # dead margin on the right for the brace
+
+    # ---- (a left) stacked distribution of the 63 consecutive distances ---
+    for yy, prof in zip(y_pos, profiles):
+        left = 0
+        for d in range(1, encoding.N_LINES + 1):
+            width = prof["counts"][d]
+            if width == 0:
+                continue
+            ax_dist.barh(yy, width, bar_h, left=left, color=D_RAMP[d - 1],
+                         edgecolor=SURFACE, linewidth=1.2, zorder=3)
+            if width >= 6:
+                ax_dist.text(left + width / 2.0, yy, str(width),
+                             ha="center", va="center", fontsize=FS_VALUE,
+                             color=SURFACE if d >= 4 else INK, zorder=4)
+            left += width
+        assert left == n_steps
+
+    # The two Earlier Heaven rows are drawn from different sequences yet come
+    # out pixel-identical; say so, in the clear margin beside them.
+    x_br, y_hi, y_lo = n_steps * 1.055, y_pos[1] + 0.40, y_pos[2] - 0.40
+    ax_dist.plot([x_br, x_br], [y_hi, y_lo], color=INK_MUTED, lw=0.9,
+                 clip_on=False, zorder=5)
+    for yy in (y_hi, y_lo):
+        ax_dist.plot([x_br, x_br + n_steps * 0.028], [yy, yy], color=INK_MUTED,
+                     lw=0.9, clip_on=False, zorder=5)
+    ax_dist.text(n_steps * 1.11, (y_hi + y_lo) / 2.0, "identical\nprofiles",
+                 ha="left", va="center", fontsize=FS_ANNOT, color=INK)
+
+    ax_dist.set_xlim(0, x_pad)
+    ax_dist.set_ylim(y_pos[-1] - 0.78, y_pos[0] + 0.62)
+    ax_dist.set_xticks([0, 21, 42, n_steps])
+    ax_dist.set_yticks(y_pos)
+    ax_dist.set_yticklabels([r[0] for r in rows], fontsize=FS_TICK)
+    ax_dist.get_yticklabels()[-1].set_fontweight("bold")   # King Wen is the subject
+    ax_dist.get_yticklabels()[-1].set_color(INK)
+    ax_dist.tick_params(axis="y", length=0, pad=5)
+    ax_dist.set_xlabel(f"number of the {n_steps} consecutive steps, "
+                       "by the number of lines $d$ that change")
+    xgrid(ax_dist)
+    ax_dist.spines["bottom"].set_bounds(0, n_steps)
+    # The ramp is ordered, so the legend is built in ramp order rather than in
+    # the order the segments happen to be drawn.
+    ax_dist.legend(
+        handles=[Patch(facecolor=D_RAMP[d - 1], edgecolor=SURFACE, linewidth=1.2,
+                       label=f"$d = {d}$") for d in range(1, encoding.N_LINES + 1)],
+        loc="lower left", bbox_to_anchor=(0.0, 1.005), ncol=6,
+        handlelength=1.1, handletextpad=0.45, columnspacing=1.0,
+    )
+    ax_dist.set_title("(a)  the orderings as codes", loc="left",
+                      fontsize=FS_LABEL, pad=24)
+
+    # ---- (a right) the means against the random null ---------------------
+    lo, hi = null["mean"] - null["stdev"], null["mean"] + null["stdev"]
+    ax_mean.axvspan(lo, hi, facecolor="#e4e2d7", edgecolor="none", zorder=1)
+    ax_mean.axvline(null["mean"], color=INK_MUTED, lw=0.9, ls=(0, (4, 2.4)), zorder=2)
+    # Set just outside the band so the dashed mean line stays unobstructed.
+    ax_mean.text(lo - 0.065, (y_pos[0] + y_pos[-1]) / 2.0,
+                 "random null (mean $\\pm$ 1 s.d.)", rotation=90,
+                 ha="center", va="center", fontsize=FS_VALUE, color=INK_2, zorder=2)
+
+    for i, (yy, prof) in enumerate(zip(y_pos, profiles)):
+        is_kw = (i == 3)
+        ax_mean.plot([prof["mean"]], [yy], marker="s" if is_kw else "o",
+                     ms=6.2 if is_kw else 6.8,
+                     color=S2 if is_kw else S1, mec=SURFACE, mew=0.9, zorder=4)
+        ax_mean.text(prof["mean"] + 0.10, yy, f"{prof['mean']:.3f}",
+                     ha="left", va="center", fontsize=FS_VALUE,
+                     color=S2 if is_kw else INK, zorder=4,
+                     fontweight="bold" if is_kw else "normal")
+    ax_mean.text(profiles[3]["mean"] + 0.10, y_pos[3] - 0.42,
+                 f"{z_kw:+.1f} s.d.", ha="left", va="center",
+                 fontsize=FS_VALUE, color=S2)
+    ax_mean.text(profiles[0]["mean"] + 0.10, y_pos[0] - 0.42, "the optimum",
+                 ha="left", va="center", fontsize=FS_VALUE, color=INK_MUTED)
+
+    ax_mean.set_xlim(0.72, 4.48)
+    ax_mean.set_xticks([1, 2, 3, 4])
+    ax_mean.set_xlabel("mean lines\nchanged per step")
+    ax_mean.tick_params(labelleft=False, left=False)
+    ax_mean.set_axisbelow(True)
+    ax_mean.grid(axis="x", color=GRID, linewidth=0.6)
+    ax_mean.set_title("and their means", loc="left", fontsize=FS_SUB,
+                      color=INK_2, fontweight="normal", pad=24)
+
+    # ---- (b) the couplet structure ---------------------------------------
+    yb = [2.6, 1.3, 0.0]
+    hb = 0.42
+    n_rev, n_comp = pair["reversal_pairs"], pair["complement_pairs"]
+
+    # Gridlines are drawn by hand rather than with xgrid() so that they stop
+    # above the legend and the callout instead of running through their text.
+    grid_top, grid_bot = yb[0] + 0.80, yb[2] - 0.45
+    for xt in range(0, n_couplets + 1, 8):
+        ax_pair.plot([xt, xt], [grid_bot, grid_top], color=GRID, lw=0.6, zorder=0)
+    ax_pair.plot([n_couplets, n_couplets], [grid_bot, grid_top], color=AXIS,
+                 lw=0.9, ls=(0, (3, 2.4)), zorder=2)
+    ax_pair.barh(yb[0], n_rev, hb, color=S1, edgecolor=SURFACE, linewidth=1.4,
+                 hatch=HATCH_1, zorder=3, label="couplet closed by reversal")
+    ax_pair.barh(yb[0], n_comp, hb, left=n_rev, color=S2, edgecolor=SURFACE,
+                 linewidth=1.4, hatch=HATCH_2, zorder=3,
+                 label="couplet closed by complement")
+    ax_pair.barh(yb[1], sim["max_couplets_explained"], hb, color=NEUTRAL,
+                 edgecolor=SURFACE, linewidth=1.4, zorder=3,
+                 label="random ordering (null)")
+    ax_pair.barh(yb[2], expected["expected_couplets"], hb, color=NEUTRAL,
+                 edgecolor=SURFACE, linewidth=1.4, zorder=3)
+
+    ax_pair.text(n_rev / 2.0, yb[0] + hb / 2 + 0.10, f"{n_rev} by reversal",
+                 ha="center", va="bottom", fontsize=FS_ANNOT, color=INK)
+    ax_pair.plot([n_rev + n_comp / 2.0] * 2,
+                 [yb[0] - hb / 2, yb[0] - hb / 2 - 0.16],
+                 color=INK_MUTED, lw=0.7, zorder=2)
+    ax_pair.text(n_rev + n_comp / 2.0, yb[0] - hb / 2 - 0.21,
+                 f"{n_comp} by complement:\nKing Wen {comp_labels}",
+                 ha="center", va="top", fontsize=FS_VALUE, color=INK_2)
+    ax_pair.text(n_couplets + 0.9, yb[0],
+                 f"{n_rev + n_comp} of {n_couplets}\n"
+                 f"{pair['unexplained_pairs']} unexplained",
+                 ha="left", va="center", fontsize=FS_ANNOT, color=INK,
+                 fontweight="bold")
+
+    ax_pair.text(sim["max_couplets_explained"] + 0.7, yb[1],
+                 f"{sim['max_couplets_explained']}", ha="left", va="center",
+                 fontsize=FS_VALUE, color=INK)
+    ax_pair.text(expected["expected_couplets"] + 0.7, yb[2],
+                 f"{expected['expected_couplets']:.2f}", ha="left", va="center",
+                 fontsize=FS_VALUE, color=INK)
+
+    ax_pair.text(
+        n_couplets + 7.6, -0.90,
+        "A uniformly random ordering satisfies the couplet claim with\n"
+        f"probability $32!\\cdot 2^{{32}}/64! = {p_mant:.1f}\\times 10^{{{p_exp}}}$.",
+        ha="right", va="center", fontsize=FS_ANNOT, color=INK,
+        bbox=dict(boxstyle="round,pad=0.45", facecolor="#f4f7fd",
+                  edgecolor=S1, linewidth=0.9),
+    )
+
+    ax_pair.set_xlim(0, n_couplets + 8.0)
+    ax_pair.set_ylim(-1.62, yb[0] + 0.80)
+    ax_pair.set_xticks(np.arange(0, n_couplets + 1, 8))
+    ax_pair.set_yticks(yb)
+    ax_pair.set_yticklabels([
+        "King Wen\nsequence",
+        f"random ordering\nbest of {ORDER_TRIALS:,}",
+        "random ordering\nexpected",
+    ], fontsize=FS_TICK)
+    ax_pair.get_yticklabels()[0].set_fontweight("bold")
+    ax_pair.get_yticklabels()[0].set_color(INK)
+    ax_pair.tick_params(axis="y", length=0, pad=5)
+    ax_pair.set_xlabel(f"couplets explained (of {n_couplets})")
+    ax_pair.set_axisbelow(True)
+    ax_pair.spines["bottom"].set_bounds(0, n_couplets)
+    ax_pair.legend(loc="lower left", bbox_to_anchor=(0.0, 0.0), ncol=1,
+                   handlelength=1.5, handletextpad=0.55)
+    ax_pair.set_title("(b)  the King Wen sequence, as a symmetry structure:  "
+                      "how each couplet closes",
+                      loc="left", fontsize=FS_LABEL, pad=10)
+
+    # ---- figure furniture -------------------------------------------------
+    fig.text(0.006, 0.990,
+             "King Wen is organised by symmetry, not by proximity",
+             ha="left", va="top", fontsize=FS_TITLE, fontweight="bold", color=INK)
+    fig.text(0.006, 0.955,
+             "as a code the sequence is unremarkable — it changes more lines per step "
+             "than a random ordering does;\nas a symmetry structure it is exact — every "
+             "one of the 32 couplets is accounted for, with nothing left over",
+             ha="left", va="top", fontsize=FS_SUB, color=INK_2)
+
+    caption(
+        fig,
+        f"Both nulls are computed at run time (seed {ORDER_SEED}): the band in (a) is "
+        f"orderings.random_profile_distribution({ORDER_TRIALS:,}), mean {null['mean']:.3f} and "
+        f"s.d. {null['stdev']:.3f} against an exact expectation of {exact_null_mean:.3f}; the "
+        f"rows in (b) are orderings.expected_explained_couplets_random() and "
+        f"orderings.pairing_simulation({ORDER_TRIALS:,}). The two Earlier Heaven rows are different "
+        f"sequences — they disagree at {rel['positions_that_differ']} of the 64 positions — "
+        f"but bit reversal is an isometry of $Q_6$, so no distance statistic can separate them.",
+    )
+    return save(fig, outdir, "fig7_orderings")
+
+
+# ==========================================================================
 # Driver
 # ==========================================================================
 
@@ -856,6 +1134,7 @@ FIGURES = {
     "fig4": fig4_stationary,
     "fig5": fig5_mixing,
     "fig6": fig6_information,
+    "fig7": fig7_orderings,
 }
 
 
@@ -867,7 +1146,7 @@ def main(argv=None) -> int:
                         help="directory for the output files "
                              "(default: %(default)s)")
     parser.add_argument("--only", choices=sorted(FIGURES), default=None,
-                        help="render a single figure instead of all six")
+                        help="render a single figure instead of all of them")
     args = parser.parse_args(argv)
 
     outdir = os.path.abspath(args.outdir)

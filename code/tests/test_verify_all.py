@@ -27,6 +27,7 @@ EXPECTED_CHECK_IDS = [
     "M1", "M2", "M3", "M4", "M5",
     "T1", "T2", "T3", "T4", "T5", "T6", "T7",
     "I1", "I2", "I3", "I4", "I5",
+    "O1", "O2", "O3", "O4", "O5", "O6", "O7",
     "G1", "G2",
 ]
 
@@ -51,14 +52,14 @@ def report():
 # Shape of the report
 # --------------------------------------------------------------------------
 
-def test_build_report_runs_end_to_end_and_returns_40_checks(report):
+def test_build_report_runs_end_to_end_and_returns_47_checks(report):
     assert isinstance(report, verify_all.Report)
-    assert len(report.checks) == 40
+    assert len(report.checks) == 47
 
 
 def test_check_ids_are_exactly_the_expected_set_in_order(report):
     assert [c.cid for c in report.checks] == EXPECTED_CHECK_IDS
-    assert len(set(EXPECTED_CHECK_IDS)) == 40, "check ids must be unique"
+    assert len(set(EXPECTED_CHECK_IDS)) == 47, "check ids must be unique"
 
 
 def test_every_verdict_is_in_the_allowed_set(report):
@@ -79,24 +80,24 @@ def test_every_check_carries_a_claim_a_stated_and_a_computed_value(report):
 def test_counts_sum_to_the_number_of_checks(report):
     counts = report.counts()
     assert set(counts) == ALLOWED_VERDICTS
-    assert sum(counts.values()) == len(report.checks) == 40
+    assert sum(counts.values()) == len(report.checks) == 47
 
 
 def test_verdict_breakdown_is_stable(report):
-    """24 confirmed, 5 refined, 7 corrected, 4 new."""
+    """25 confirmed, 5 refined, 8 corrected, 9 new."""
     assert report.counts() == {
-        CONFIRMED: 24,
+        CONFIRMED: 25,
         REFINED: 5,
-        CORRECTED: 7,
-        NEW: 4,
+        CORRECTED: 8,
+        NEW: 9,
     }
 
 
-def test_topics_cover_all_seven_modules(report):
+def test_topics_cover_all_eight_areas(report):
     topics = {c.topic for c in report.checks}
     assert topics == {
         "Encoding", "Automaton", "Yarrow", "Markov",
-        "Topology", "Information", "Genetic code",
+        "Topology", "Information", "Orderings", "Genetic code",
     }
 
 
@@ -149,7 +150,7 @@ def test_checks_that_should_pass_are_confirmed(report):
 def test_print_console_runs_without_error(report, capsys):
     verify_all.print_console(report)
     out = capsys.readouterr().out
-    assert "40 checks" in out
+    assert "47 checks" in out
     assert "corrected" in out
 
 

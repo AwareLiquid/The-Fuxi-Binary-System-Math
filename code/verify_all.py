@@ -26,7 +26,17 @@ from dataclasses import dataclass, field
 from fractions import Fraction
 from math import comb, isclose
 
-from fuxi import automaton, encoding, genetic, information, markov, topology, yarrow
+from fuxi import (
+    automaton,
+    encoding,
+    genetic,
+    information,
+    king_wen,
+    markov,
+    orderings,
+    topology,
+    yarrow,
+)
 
 CONFIRMED = "CONFIRMED"
 REFINED = "REFINED"
@@ -111,11 +121,11 @@ def check_encoding(rep: Report) -> None:
         "E5", "Encoding",
         "Binary structure does not depend on where the new line is placed",
         "asserted for bottom placement only",
-        "both placements give the full set and the sorted order 0..63"
-        if (both_sorted and same_set) else "placements disagree",
+        "both placements generate the full set of six-bit strings"
+        if same_set else "placements disagree",
         REFINED if (both_sorted and same_set) else CORRECTED,
-        note="Supports the convention-independence argument: the generated set "
-             "and the enumeration order are both stable across the two readings.",
+        note="The generated set is convention-independent. The enumeration order "
+             "is not, and check O1 shows how far apart the two readings put it.",
         evidence="encoding.doubling_values with placement='top' and 'bottom'",
     )
 
@@ -496,6 +506,123 @@ def check_information(rep: Report) -> None:
 # 7. Genetic code
 # --------------------------------------------------------------------------
 
+def check_orderings(rep: Report) -> None:
+    counting = orderings.counting_ordering()
+    traditional = orderings.fuxi_traditional_ordering()
+    gray = orderings.gray_ordering()
+    kw = king_wen.king_wen_ordering()
+
+    rel = orderings.bit_reversal_relation()
+    rep.add(
+        "O1", "Orderings",
+        "Which bit-weight convention gives the classical Earlier Heaven sequence",
+        "the arrangement is binary counting under the bottom-as-least-significant "
+        "reading used here",
+        f"the classical sequence is binary counting under the bottom-as-MOST-"
+        f"significant reading; the two readings differ at "
+        f"{rel['positions_that_differ']} of 64 positions",
+        CORRECTED,
+        note="The traditional trigram order Qian, Dui, Li, Zhen, Xun, Kan, Gen, "
+             "Kun is 7 down to 0 with the bottom line as the most significant "
+             "bit. The set is unaffected, and so is every algebraic and "
+             "topological result, because none of them depends on an ordering. "
+             "Only the identification of the sequence with 0, 1, ..., 63 needs "
+             "the convention stated.",
+        evidence="orderings.fuxi_traditional_ordering against counting_ordering",
+    )
+
+    pc = orderings.distance_profile(counting)
+    pt = orderings.distance_profile(traditional)
+    rep.add(
+        "O2", "Orderings",
+        "The two readings are related by bit reversal, an isometry",
+        "not stated",
+        f"identical coding profiles: total {pt['total_line_changes']} line "
+        f"changes, mean {_f(pt['mean'], 4)}, counts {pt['counts']}",
+        NEW if (pc["counts"] == pt["counts"]
+                and rel["reverse_is_hypercube_isometry"]) else CORRECTED,
+        note="A permutation of bit positions preserves Hamming distance, so the "
+             "choice of convention cannot change any distance-based property of "
+             "the arrangement. This is what makes the O1 correction harmless.",
+    )
+
+    pg = orderings.distance_profile(gray)
+    rep.add(
+        "O3", "Orderings",
+        "Whether the Earlier Heaven arrangement is an optimal code",
+        "not stated",
+        f"no: mean consecutive distance {_f(pc['mean'], 4)} against "
+        f"{_f(pg['mean'], 4)} for a Gray code on the same 64 states",
+        NEW,
+        note="Binary counting is not a Gray code. Only 32 of its 63 steps change "
+             "a single line, against 63 of 63 for the reflected binary code. Any "
+             "claim that the arrangement minimizes change per step is false.",
+    )
+
+    match = orderings.canonical_matching()
+    rep.add(
+        "O4", "Orderings",
+        "The reversal-and-complement relation is a perfect matching",
+        "not stated",
+        f"{match['n_pairs']} pairs, no fixed points, "
+        f"{match['reversal_pairs']} by reversal and "
+        f"{match['complement_pairs']} by complement",
+        NEW if match["is_perfect_matching"] else CORRECTED,
+        note="The complement of a palindromic hexagram is palindromic, so the "
+             "eight palindromes close among themselves into four pairs. This "
+             "makes the couplet claim in O5 well posed before any sequence data "
+             "is consulted.",
+    )
+
+    pair = orderings.pairing_structure(kw)
+    rep.add(
+        "O5", "Orderings",
+        "The King Wen sequence consists of 32 reversal-or-complement couplets",
+        "asserted by tradition and in the secondary literature",
+        f"holds: {pair['reversal_pairs']} reversal couplets, "
+        f"{pair['complement_pairs']} complement couplets, "
+        f"{pair['unexplained_pairs']} unexplained",
+        CONFIRMED if pair["claim_holds"] else CORRECTED,
+        note="The four complement couplets are King Wen 1-2, 27-28, 29-30 and "
+             "61-62, which are exactly the couplets whose members are their own "
+             "reversal.",
+        evidence="orderings.pairing_structure on independently cross-validated "
+                 "sequence data; every entry checked against trigram-derived anchors",
+    )
+
+    null = orderings.pairing_null_probability()
+    exp = orderings.expected_explained_couplets_random()
+    rep.add(
+        "O6", "Orderings",
+        "How improbable the couplet structure is under a random ordering",
+        "not quantified",
+        f"probability {null['probability']:.2e} (10^{null['log10_probability']:.1f}); "
+        f"a random ordering explains {_f(exp['expected_couplets'], 3)} couplets on average",
+        NEW,
+        note="Counted exactly as 32! * 2^32 / 64! rather than simulated, since no "
+             "simulation could reach this magnitude. The structure is not a "
+             "coincidence of the sequence.",
+    )
+
+    pk = orderings.distance_profile(kw)
+    nullp = orderings.random_profile_distribution(4000)
+    z = (pk["mean"] - nullp["mean"]) / nullp["stdev"]
+    rep.add(
+        "O7", "Orderings",
+        "Whether the King Wen sequence is also optimized as a code",
+        "not stated",
+        f"no: mean consecutive distance {_f(pk['mean'], 4)} against a random null "
+        f"of {_f(nullp['mean'], 4)} plus or minus {_f(nullp['stdev'], 4)} (z = {z:+.2f})",
+        NEW,
+        note="The sequence is organized by an involution, not by proximity. It "
+             "satisfies the symmetry criterion perfectly and sits slightly above "
+             "random on the distance criterion, with only 2 of its 63 steps "
+             "changing a single line. The two criteria are independent, and the "
+             "sequence optimizes one of them.",
+        evidence="4000 random orderings, seed 20260722",
+    )
+
+
 def check_genetic(rep: Report) -> None:
     r = genetic.dichotomy_rank()
     rep.add(
@@ -536,6 +663,7 @@ def build_report(trials: int) -> Report:
     check_markov(rep)
     check_topology(rep)
     check_information(rep)
+    check_orderings(rep)
     check_genetic(rep)
     return rep
 

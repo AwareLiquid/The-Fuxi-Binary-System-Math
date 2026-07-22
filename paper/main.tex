@@ -54,16 +54,24 @@ independent of the current state even though its marginal rate is $1/4$. The
 kernel the procedure actually induces is therefore asymmetric, and its
 stationary distribution is not uniform but the product form
 $\pi(h) \propto (3/4)^{\text{yin}}(1/4)^{\text{yang}}$, which places $729$ times
-more mass on the all-yin hexagram than on the all-yang hexagram. Of forty
-checked claims, twenty-four are confirmed, five are refined, four are new, and
-seven are corrected. The corrections include a clustering coefficient reported
-as $5/12$ that is exactly zero because the state graph is bipartite, a mutual
-information of $1.132$ bits that is $1.233$ bits once the state dependence is
-carried through, and a genetic-code dimension count that overstates the
-independent binary degrees of freedom by a factor of two per nucleotide. The
-results are reproducible from a single command, and we state explicitly which
-conclusions are formal theorems, which are exhaustive machine checks, and which
-are estimates under a stated model of how the divining pile is divided.
+more mass on the all-yin hexagram than on the all-yang hexagram. Turning to the
+arrangements themselves, we confirm that the King Wen sequence is built from
+thirty-two couplets related by inversion, or by complementation where a hexagram
+is its own inversion, and we count the improbability of that structure exactly
+at $8.9 \times 10^{-45}$ under a random ordering. The same sequence is
+unremarkable as a code, sitting two standard deviations above a random null on
+consecutive distance, so its two possible organizing criteria come apart. Of
+forty-seven checked claims, twenty-five are confirmed, five are refined, nine
+are new, and eight are corrected. The corrections include a clustering
+coefficient reported as $5/12$ that is exactly zero because the state graph is
+bipartite, a mutual information of $1.132$ bits that is $1.233$ bits once the
+state dependence is carried through, a genetic-code dimension count that
+overstates the independent binary degrees of freedom by a factor of two per
+nucleotide, and the bit-weight convention under which the Earlier Heaven
+arrangement is binary counting. The results are reproducible from a single
+command, and we state explicitly which conclusions are formal theorems, which
+are exhaustive machine checks, and which are estimates under a stated model of
+how the divining pile is divided.
 \end{abstract}
 
 \noindent\textbf{Keywords:} Fuxi hexagram arrangement; binary encoding;
@@ -106,8 +114,9 @@ formalization makes. Our contributions are the following.
 \item We fix a bottom-up bit encoding and show by exhaustive construction that
 the recursive doubling generation attributed to Shao Yong yields exactly the set
 of six-bit strings, under either of the two conventions for where a new line is
-placed. This makes precise the sense in which the binary reading does not depend
-on reading direction (Section~\ref{sec:encoding}).
+placed. This separates the part of the binary reading that is
+convention-independent, namely the set, from the part that is not, namely the
+sequence (Sections~\ref{sec:encoding} and~\ref{sec:orderings}).
 
 \item We prove that the changing-line mechanism is bitwise exclusive-or with a
 mutation mask, and verify the proof on all $4^6$ assignments of the four
@@ -125,6 +134,12 @@ induced kernel is asymmetric and its stationary distribution is not uniform
 \item We compute the topological and information-theoretic quantities directly
 from the model rather than from quoted formulas, and report where the computed
 values differ from the received ones (Section~\ref{sec:results}).
+
+\item We turn the model on the arrangements themselves. The couplet structure
+tradition ascribes to the King Wen sequence holds exactly, and we count its
+improbability under a random ordering rather than estimating it. The same
+sequence turns out not to be optimized as a code, so the symmetry and distance
+criteria come apart (Section~\ref{sec:orderings}).
 
 \item We release the verification suite. Every number in this paper is produced
 by a single command, and each check records whether it confirms, refines,
@@ -174,6 +189,15 @@ than graph invariants. The clustering coefficient we correct in
 Section~\ref{sec:topology} is therefore not a claim of that paper. It is a value
 carried in the informal restatement of the system that this work formalizes, and
 we have not traced it to a primary source.
+
+\paragraph{Structure of the King Wen sequence.}
+That the King Wen sequence pairs its hexagrams by inversion, with complementation
+substituted for the eight hexagrams that inversion leaves fixed, is long
+established and widely repeated. What has not accompanied it is a quantitative
+statement of how much structure that represents. We verify the claim
+exhaustively and, more usefully, count its improbability under a random ordering
+exactly rather than estimating it, which turns a qualitative observation into a
+number (Section~\ref{sec:orderings}).
 
 \paragraph{Probabilistic models of the divination procedure.}
 The line-state probabilities of the yarrow-stalk method have been derived
@@ -454,9 +478,10 @@ graph invariants on the whole graph.
 \section{Verification results}
 \label{sec:results}
 
-Table~\ref{tab:summary} summarizes the outcome. Of forty checks, twenty-four are
-confirmed, five refined, seven corrected, and four new. We report the corrections
-in full, since they are the results that change the received account.
+Table~\ref{tab:summary} summarizes the outcome. Of forty-seven checks,
+twenty-five are confirmed, five refined, eight corrected, and nine new. We
+report the corrections in full, since they are the results that change the
+received account.
 
 \begin{table}[t]
 \centering
@@ -473,9 +498,10 @@ Yarrow-stalk procedure       & 5 & 1 & 2 & 1 & 9 \\
 Markov kernels               & 2 & 1 & 1 & 1 & 5 \\
 Topology                     & 4 & 1 & 1 & 1 & 7 \\
 Information                  & 3 & 0 & 2 & 0 & 5 \\
+Orderings                    & 1 & 0 & 1 & 5 & 7 \\
 Genetic code                 & 1 & 0 & 1 & 0 & 2 \\
 \midrule
-Total                        & 24 & 5 & 7 & 4 & 40 \\
+Total                        & 25 & 5 & 8 & 9 & 47 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -484,13 +510,16 @@ Total                        & 24 & 5 & 7 & 4 & 40 \\
 
 The doubling method returns $2^n$ symbols for every $n$ from $0$ to $6$, and the
 set it returns at $n = 6$ equals the set of all six-bit strings computed
-independently. Both line-placement conventions pass. Adding the new line above
-the existing ones, with the yin branch of each level emitted first, gives the
-sorted sequence $0,1,\dots,63$. Adding it below, with each parent emitting its
-yin child then its yang child, gives the same sorted sequence. The binary
-structure and the enumeration order therefore both survive the change of
-convention, which strengthens the set-level claim
-of~\cite{maitre2023fuxi} (Figure~\ref{fig:doubling}).
+independently, under either convention for where the new line is placed
+(Figure~\ref{fig:doubling}). The generated set is therefore
+convention-independent, which is the claim that matters for everything that
+follows, since no algebraic, topological, or probabilistic result in this paper
+depends on an ordering.
+
+The enumeration order is a separate matter, and it is not
+convention-independent. We return to it in Section~\ref{sec:orderings}, where
+the identification of the arrangement with binary counting turns out to require
+the opposite bit-weight convention from the one adopted here.
 
 The Boolean-lattice rank distribution is $1, 6, 15, 20, 15, 6, 1$ as expected.
 
@@ -661,6 +690,94 @@ predicts.}
 \label{fig:information}
 \end{figure}
 
+\subsection{Orderings}
+\label{sec:orderings}
+
+Everything to this point concerns the set of sixty-four hexagrams and the group
+acting on it. Neither depends on how the hexagrams are arranged in a sequence.
+This section addresses the arrangement, which is where the Earlier Heaven and
+King Wen orderings differ, and where the one remaining correction lies.
+
+\paragraph{Two readings of the Earlier Heaven arrangement.}
+The classical trigram order is Qian, Dui, Li, Zhen, Xun, Kan, Gen, Kun. Read
+with the bottom line as the \emph{most} significant bit, that sequence is $7$
+down to $0$, and the sixty-four hexagram sequence extends it from Qian down to
+Kun. The arrangement is therefore binary counting, but under the opposite
+bit-weight convention from the one adopted in Section~\ref{sec:encoding} for the
+algebra. Under the bottom-as-least-significant convention the classical sequence
+is a different permutation of the same set, differing at $56$ of the $64$
+positions.
+
+This corrects the way the identification is usually stated, including in the
+informal version of this analysis. It is worth being precise about what it does
+and does not disturb. The two readings are conjugate by the
+bit-reversal permutation. A permutation of bit positions is an isometry of the
+hypercube, so it preserves every Hamming distance. The two readings consequently
+have identical coding profiles, and no distance-based property of the
+arrangement can depend on the choice. What the choice does fix is the direction
+of the enumeration, and that is exactly the question
+of~\cite{maitre2023fuxi}. Our contribution here is to make the dependence exact:
+the set is convention-independent, the sequence is not, and the two candidate
+sequences are related by bit reversal.
+
+\paragraph{The Earlier Heaven arrangement is not an optimal code.}
+Under either reading, the arrangement changes $120$ lines across its $63$ steps,
+a mean of $1.905$ lines per step, and only $32$ of the $63$ steps change a single
+line. A reflected binary (Gray) code on the same sixty-four states changes one
+line at every step, for a total of $63$ and a mean of $1.000$. Binary counting is
+not a Gray code. Any claim that the arrangement minimizes change from one
+hexagram to the next is therefore false, and the optimum it is sometimes said to
+achieve is achieved by a different ordering.
+
+\paragraph{The King Wen couplet structure.}
+Tradition holds that the King Wen sequence consists of thirty-two couplets, in
+which the second hexagram is the first turned upside down, except where a
+hexagram is unchanged by inversion, in which case the couplet is completed by
+the complement instead.
+
+The claim is well posed before any sequence data is consulted. Assign every
+hexagram its reversal, or its complement when it is its own reversal. That
+assignment is a perfect matching on the sixty-four states. The complement of a
+palindromic hexagram is itself palindromic, so the eight palindromes close among
+themselves into four pairs, leaving twenty-eight reversal pairs.
+
+The claim holds exactly. All thirty-two couplets of the King Wen sequence are
+accounted for, twenty-eight by reversal and four by complement, with none
+unexplained. The four complement couplets are King Wen $1$--$2$, $27$--$28$,
+$29$--$30$ and $61$--$62$, which are precisely the couplets whose members are
+their own reversal.
+
+Its improbability can be counted rather than estimated. If the claim holds, the
+sequence lists thirty-two matched pairs consecutively, so the favourable
+permutations number $32! \cdot 2^{32}$ out of $64!$, a probability of
+$8.9 \times 10^{-45}$. A random ordering satisfies fewer than one couplet on
+average. No simulation can reach this magnitude, which is why the value is
+computed exactly.
+
+\paragraph{The two criteria come apart.}
+The King Wen sequence satisfies the symmetry criterion perfectly and does not
+satisfy the distance criterion at all. Its mean consecutive Hamming distance is
+$3.349$, against a random null of $3.044 \pm 0.152$ over four thousand random
+orderings. It therefore sits about two standard deviations \emph{above} random
+rather than below it. Only $2$ of its $63$ steps change a single line
+(Figure~\ref{fig:orderings}).
+
+The two criteria are independent, and the sequence optimizes one of them. That
+is a fact about the sequence, not an inference about intent, and we draw no
+conclusion about why it was built the way it was.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.92\textwidth]{figures/fig7_orderings.pdf}
+\caption{Four orderings of the same sixty-four hexagrams, compared as codes. The
+Gray code is optimal. The Earlier Heaven arrangement is binary counting under
+either reading, and the two readings have identical profiles because bit
+reversal is an isometry. The King Wen sequence sits slightly above the random
+null, while satisfying a symmetry criterion that a random ordering meets with
+probability $8.9 \times 10^{-45}$.}
+\label{fig:orderings}
+\end{figure}
+
 \subsection{The genetic-code dimension count}
 \label{sec:genetic}
 
@@ -712,6 +829,15 @@ replaces a number with a structural fact, namely that the state graph is
 bipartite, which is more informative than the number it replaces. Correcting the
 dimension count removes an inconsistency while leaving the count of $64$ intact.
 
+The bit-weight convention is a different kind again. It is not a wrong number but
+a wrong attribution: the arrangement is binary counting, and the reading under
+which that is true was misidentified. Nothing downstream moves, because the two
+readings differ by an isometry. What changes is the precision with which the
+identification can be stated, and that is the question the historical literature
+has actually been arguing about. We note that this is the one correction we
+introduced ourselves, in the informal version of this analysis, and that it was
+caught by the same procedure as the others.
+
 The independence failure is different, because it propagates. It changes the
 stationary distribution from uniform to a product form with a $729$-fold spread,
 it changes the mutual information, and it changes the entropy of the transformed
@@ -749,10 +875,15 @@ a different distribution over line states and would give different numbers. Our
 claim is about the procedure we model, not about divination in general.
 
 The third is that the ordering of the arrangement admits more than one defensible
-reconstruction. We do not rely on any particular ordering for the algebraic,
-topological, or probabilistic results, all of which are properties of the set and
-its structure rather than of an enumeration. The ordering enters only in
-Section~\ref{sec:encoding}, where we report it under both conventions.
+reconstruction. This is correct, and it is the one place where a convention
+genuinely changes an answer, as Section~\ref{sec:orderings} shows. We handle it
+in two ways. The algebraic, topological, and probabilistic results do not rely on
+any ordering at all, being properties of the set and its structure. Where an
+ordering is unavoidable, we report both readings and show they are conjugate by
+bit reversal, which is an isometry, so no distance-based conclusion can depend on
+the choice. The couplet result for the King Wen sequence is likewise invariant,
+since reversal and complementation are defined on hexagrams rather than on
+positions.
 
 \subsection{Relation to discrete computational models, and the limits of that
 relation}
@@ -810,10 +941,17 @@ says nothing about what those line states are taken to mean.
 
 \subsection{Limitations}
 
-The formalization covers the Earlier Heaven arrangement and the three-operation
-yarrow procedure. It does not cover the King Wen sequence, the coin method, the
+The formalization covers the Earlier Heaven arrangement, the King Wen sequence,
+and the three-operation yarrow procedure. It does not cover the coin method, the
 line-position correspondences used in traditional interpretation, or any of the
 commentarial apparatus.
+
+The King Wen results depend on sequence data, which is the one place this work
+relies on an external source rather than on construction. We reconciled four
+independent sources and checked every entry against anchors derived from the
+trigram composition, and the table passes eight structural checks. One source
+proved to contain a genuine error, which the checks caught. We note the
+dependence because it is different in kind from the rest of the paper.
 
 The probability results depend on a model of how the pile is divided. We report
 two such models and show the main conclusion is stable across them, but neither
@@ -842,13 +980,22 @@ system and machine-checked the quantitative claims that the received account
 makes about it. The changing-line mechanism is bitwise exclusive-or, verified on
 all $4096$ line-state assignments, and the transition structure is the
 elementary abelian group $\Ztwo^6$ whose Cayley graph is the six-dimensional
-hypercube. Twenty-four of forty checked claims are confirmed and five are
-refined.
+hypercube. Twenty-five of forty-seven checked claims are confirmed and five are
+refined. Among the confirmed is a structural claim about the King Wen sequence:
+its thirty-two couplets are related by inversion, or by complementation for the
+eight hexagrams that are their own inversion, and a random ordering reproduces
+that structure with probability $8.9 \times 10^{-45}$. The same sequence is not
+optimized as a code, which separates the two criteria under which an arrangement
+might be called ordered.
 
-Seven are corrected. The state-transition graph is bipartite and therefore has a
+Eight are corrected. The state-transition graph is bipartite and therefore has a
 clustering coefficient of exactly zero rather than $5/12$. The genetic-code
 dichotomies are dependent over $\mathrm{GF}(2)$, giving two free bits per
-nucleotide rather than three. Most consequentially, the yarrow-stalk procedure
+nucleotide rather than three. The Earlier Heaven arrangement is binary counting
+only when the bottom line is read as the most significant bit, the opposite of
+the convention that makes the algebra convenient, and the two readings differ at
+$56$ of $64$ positions while sharing every distance-based property. Most
+consequentially, the yarrow-stalk procedure
 makes a yang line change three times as often as a yin line, so the mutation mask
 is not independent of the state. The kernel the procedure induces is asymmetric,
 its stationary distribution is the product form
@@ -863,10 +1010,15 @@ support comparisons between this system and physical theory beyond the
 observation that both can be built by iterated binary splitting.
 
 The methodological point generalizes further than the specific corrections do.
-Three errors persisted in an account of a $64$-state system, which is small
-enough to enumerate completely on any computer. They persisted because the
-account was written rather than run. Formalizations of historical symbolic
-systems are worth executing, and the cost of doing so is low.
+Four distinct errors persisted in an account of a $64$-state system, which is
+small enough to enumerate completely on any computer. One of them we introduced
+ourselves and caught only by running the arrangement rather than describing it.
+They persisted because the account was written rather than executed.
+Formalizations of historical symbolic systems are worth executing, and the cost
+of doing so is low.
+
+The same discipline applied to the bibliography found a comparable rate. That
+suggests the problem is not specific to this subject matter.
 
 \section*{Code and data availability}
 
