@@ -13,7 +13,7 @@ received account turn out to be wrong, and one of them propagates.
 
 | Path | Contents |
 |---|---|
-| **[`paper/main.pdf`](paper/main.pdf)** | **The manuscript, compiled — start here** (16 pp.) |
+| **[`paper/main.pdf`](paper/main.pdf)** | **The manuscript, compiled — start here** (19 pp.) |
 | `paper/main.tex` | Manuscript source |
 | `paper/figures/` | Generated figures (PDF and PNG) |
 | `code/fuxi/` | The formalization, nine modules, standard library only |
