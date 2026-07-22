@@ -6,7 +6,7 @@ quantitative claim the formalization makes.
 
 The short version: the system is a six-bit finite state machine whose transition
 structure is the elementary abelian group $\mathbb{Z}_2^6$. That much is already
-known. What has not been done is running it. When you do, three claims in the
+known. What has not been done is running it. When you do, four claims in the
 received account turn out to be wrong, and one of them propagates.
 
 ## What this repository contains
@@ -18,7 +18,7 @@ received account turn out to be wrong, and one of them propagates.
 | `paper/figures/` | Generated figures (PDF and PNG) |
 | `code/fuxi/` | The formalization, nine modules, standard library only |
 | `code/fuxi/king_wen.py` | King Wen sequence data, with provenance and checks |
-| `code/verify_all.py` | The verification driver: 40 checks, one command |
+| `code/verify_all.py` | The verification driver: 47 checks, one command |
 | `code/tests/` | pytest suite |
 | `code/figures/make_figures.py` | Regenerates every figure from the model |
 | `paper/refs.bib` | Bibliography, metadata audited (see below) |
@@ -62,7 +62,7 @@ idealization that the check then makes explicit. *Corrected* means the computed
 value contradicts the received one. *New* means the quantity was not previously
 reported.
 
-### The three corrections that matter
+### The four corrections that matter
 
 **1. The clustering coefficient is zero, not 5/12.**
 
@@ -153,7 +153,7 @@ unexplained**. The four complement couplets are King Wen 1-2, 27-28, 29-30,
 How improbable is that? Counted exactly rather than simulated: a random ordering
 lists 32 matched pairs consecutively with probability
 `32! · 2³² / 64!` = **8.9 × 10⁻⁴⁵**. A random ordering explains 0.889 couplets
-on average; the best of 5000 trials managed 5 of 32.
+on average; the best of 4000 trials managed 5 of 32.
 
 **But the same sequence is unremarkable as a code.** Consecutive Hamming
 distance:
